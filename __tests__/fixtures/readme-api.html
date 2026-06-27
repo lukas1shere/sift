@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Create a new user in the Acme API">
+  <title>Create User - Acme API Reference</title>
+</head>
+<body>
+  <header role="banner">
+    <a href="/">Acme API Docs</a>
+    <nav>
+      <a href="/reference">Reference</a>
+      <a href="/guides">Guides</a>
+    </nav>
+  </header>
+
+  <div class="hub-content">
+    <div class="markdown-body">
+      <h1>Create User</h1>
+      <p>Creates a new user account. Returns the created user object on success.</p>
+
+      <h2>HTTP Request</h2>
+      <pre><code class="language-http">POST https://api.acme.dev/v1/users</code></pre>
+
+      <h2>Authentication</h2>
+      <p>This endpoint requires a valid API key passed in the <code>Authorization</code> header.</p>
+
+      <h2>Request Body</h2>
+      <table>
+        <thead>
+          <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>email</td><td>string</td><td>Yes</td><td>The user's email address. Must be unique.</td></tr>
+          <tr><td>name</td><td>string</td><td>Yes</td><td>Full display name.</td></tr>
+          <tr><td>role</td><td>string</td><td>No</td><td>One of <code>admin</code>, <code>member</code>. Defaults to <code>member</code>.</td></tr>
+          <tr><td>metadata</td><td>object</td><td>No</td><td>Arbitrary key-value metadata.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Example Request</h2>
+      <pre><code class="language-bash">curl -X POST https://api.acme.dev/v1/users \
+  -H "Authorization: Bearer $ACME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "alice@example.com",
+    "name": "Alice Smith",
+    "role": "admin"
+  }'</code></pre>
+
+      <h2>Response</h2>
+      <pre><code class="language-json">{
+  "id": "usr_01h8xqzk5p",
+  "email": "alice@example.com",
+  "name": "Alice Smith",
+  "role": "admin",
+  "created_at": "2024-01-15T10:30:00Z",
+  "metadata": {}
+}</code></pre>
+
+      <h2>Error Codes</h2>
+      <table>
+        <thead>
+          <tr><th>Status</th><th>Code</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>400</td><td>invalid_request</td><td>Missing or malformed request body.</td></tr>
+          <tr><td>401</td><td>unauthorized</td><td>Missing or invalid API key.</td></tr>
+          <tr><td>409</td><td>email_taken</td><td>An account with this email already exists.</td></tr>
+          <tr><td>422</td><td>validation_error</td><td>One or more fields failed validation.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer role="contentinfo">
+    <p>Acme API Docs &copy; 2024</p>
+  </footer>
+</body>
+</html>

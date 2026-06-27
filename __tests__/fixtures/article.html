@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="A deep dive into how vector databases work">
+  <meta name="author" content="Jane Developer">
+  <meta property="article:published_time" content="2024-03-15T09:00:00Z">
+  <meta property="og:site_name" content="Dev Insights">
+  <title>How Vector Databases Work | Dev Insights</title>
+</head>
+<body>
+  <!-- Site header with nav - should be stripped -->
+  <header id="site-header">
+    <a href="/" class="logo">Dev Insights</a>
+    <nav>
+      <a href="/articles">Articles</a>
+      <a href="/tutorials">Tutorials</a>
+      <a href="/about">About</a>
+    </nav>
+    <div class="search-bar">
+      <input type="search" placeholder="Search...">
+    </div>
+  </header>
+
+  <!-- Ad banner - should be stripped -->
+  <div class="advertisement" id="ad-top">
+    <img src="ad.png" alt="Advertisement">
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar ads - should be stripped -->
+    <aside class="sidebar">
+      <div class="widget">
+        <h3>Popular Posts</h3>
+        <ul>
+          <li><a href="#">Post 1</a></li>
+          <li><a href="#">Post 2</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Article content - should be kept -->
+    <article id="main-content">
+      <h1>How Vector Databases Work</h1>
+      <p class="byline">By Jane Developer · March 15, 2024 · 8 min read</p>
+
+      <p>Vector databases have become a foundational piece of the AI stack. If you're building a RAG pipeline, semantic search engine, or recommendation system, you're almost certainly reaching for one. But how do they actually work?</p>
+
+      <h2>What Is a Vector?</h2>
+      <p>A vector is simply an array of floating-point numbers — a point in high-dimensional space. Modern embedding models like OpenAI's <code>text-embedding-3-small</code> produce vectors with 1536 dimensions.</p>
+      <p>The key insight is that semantically similar content produces geometrically similar vectors. Two sentences about the same topic will have vectors that are close together in that 1536-dimensional space.</p>
+
+      <h2>Similarity Search</h2>
+      <p>The fundamental operation in a vector database is <strong>approximate nearest neighbor (ANN) search</strong>: given a query vector, find the K most similar vectors in the collection.</p>
+      <p>The most common similarity measures are:</p>
+      <ul>
+        <li><strong>Cosine similarity</strong> — angle between vectors. Most common for embeddings.</li>
+        <li><strong>Dot product</strong> — fast but order-dependent on magnitude.</li>
+        <li><strong>Euclidean distance</strong> — L2 distance. Useful when magnitude matters.</li>
+      </ul>
+
+      <h2>Indexing Algorithms</h2>
+      <p>Brute-force comparison across millions of vectors is too slow. Vector databases use approximate indexing algorithms:</p>
+
+      <h3>HNSW (Hierarchical Navigable Small World)</h3>
+      <p>HNSW builds a layered graph where nodes are connected to their nearest neighbors. At query time, it navigates this graph greedily from the top layer down.</p>
+      <p>It offers excellent recall/speed tradeoff and is the default index in Qdrant, Weaviate, and most others.</p>
+
+      <h3>IVF (Inverted File Index)</h3>
+      <p>IVF clusters vectors into Voronoi cells. At query time, only the nearest clusters are searched. Used heavily in FAISS.</p>
+
+      <p>Here's how you'd set up a basic vector store with Python:</p>
+      <pre><code class="language-python">import qdrant_client as qc
+from qdrant_client.models import Distance, VectorParams
+
+client = qc.QdrantClient(":memory:")
+
+client.create_collection(
+    collection_name="docs",
+    vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
+)
+</code></pre>
+
+      <h2>Metadata Filtering</h2>
+      <p>Pure semantic search is rarely enough. You usually need to combine vector similarity with structured filters ("find the most similar docs <em>where category = 'legal'</em>").</p>
+      <p>This is called <strong>hybrid search</strong> and is supported natively in Qdrant, Pinecone, and Weaviate.</p>
+
+      <!-- Social share - should be stripped -->
+      <div class="share-buttons">
+        <a href="#">Tweet</a>
+        <a href="#">Share on LinkedIn</a>
+      </div>
+    </article>
+  </div>
+
+  <!-- Comment section - should be stripped -->
+  <div id="comments">
+    <h2>Comments (12)</h2>
+    <div class="comment">
+      <p>Great article!</p>
+    </div>
+  </div>
+
+  <!-- Footer - should be stripped -->
+  <footer id="site-footer">
+    <p>&copy; 2024 Dev Insights. All rights reserved.</p>
+    <nav>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </nav>
+  </footer>
+</body>
+</html>

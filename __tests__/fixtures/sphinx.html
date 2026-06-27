@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Configuration &mdash; Acme 2.0.0 documentation</title>
+  <meta name="description" content="Acme library configuration reference">
+</head>
+<body>
+  <div class="document">
+    <div class="documentwrapper">
+      <div class="bodywrapper">
+        <div class="body" role="main">
+          <section id="configuration">
+            <h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading">¶</a></h1>
+            <p>The Acme library is configured through a <code class="docutils literal notranslate"><span class="pre">Config</span></code> object passed to the constructor.</p>
+
+            <section id="basic-setup">
+              <h2>Basic Setup<a class="headerlink" href="#basic-setup" title="Permalink to this heading">¶</a></h2>
+              <p>The simplest configuration requires only an API key:</p>
+              <div class="highlight-python notranslate">
+                <div class="highlight">
+                  <pre><code class="language-python">from acme import Client
+
+client = Client(api_key="sk-...")
+</code></pre>
+                </div>
+              </div>
+            </section>
+
+            <section id="advanced-options">
+              <h2>Advanced Options<a class="headerlink" href="#advanced-options" title="Permalink to this heading">¶</a></h2>
+              <p>For production deployments, consider these additional options:</p>
+              <div class="highlight-python notranslate">
+                <div class="highlight">
+                  <pre><code class="language-python">client = Client(
+    api_key="sk-...",
+    max_retries=3,
+    timeout=60,
+    base_url="https://api.acme.dev",
+)
+</code></pre>
+                </div>
+              </div>
+
+              <dl class="py class">
+                <dt class="sig sig-object py">
+                  <em class="property">class</em> <code class="sig-name descname">Config</code>
+                </dt>
+                <dd>
+                  <p>Configuration object for the Acme client.</p>
+                  <dl class="field-list">
+                    <dt>Parameters:</dt>
+                    <dd>
+                      <ul>
+                        <li><strong>api_key</strong> (<em>str</em>) – Required. Your Acme API key.</li>
+                        <li><strong>max_retries</strong> (<em>int</em>) – Number of retries on transient failures. Default: 2.</li>
+                        <li><strong>timeout</strong> (<em>float</em>) – Request timeout in seconds. Default: 30.</li>
+                      </ul>
+                    </dd>
+                  </dl>
+                </dd>
+              </dl>
+            </section>
+
+            <section id="environment-variables">
+              <h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this heading">¶</a></h2>
+              <p>All config values can be set via environment variables:</p>
+              <table class="docutils align-default">
+                <thead>
+                  <tr><th>Variable</th><th>Config Key</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>ACME_API_KEY</code></td><td><code>api_key</code></td><td>API authentication key</td></tr>
+                  <tr><td><code>ACME_BASE_URL</code></td><td><code>base_url</code></td><td>Override API endpoint</td></tr>
+                  <tr><td><code>ACME_TIMEOUT</code></td><td><code>timeout</code></td><td>Request timeout (seconds)</td></tr>
+                </tbody>
+              </table>
+            </section>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sphinx sidebar - should be stripped -->
+    <div class="sphinxsidebar" role="navigation">
+      <div class="sphinxsidebarwrapper">
+        <h3>Table of Contents</h3>
+        <ul>
+          <li><a href="#configuration">Configuration</a></li>
+          <li><a href="#basic-setup">Basic Setup</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div role="contentinfo">
+      <p>Built with Sphinx.</p>
+    </div>
+  </footer>
+</body>
+</html>

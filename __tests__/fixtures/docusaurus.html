@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Learn how to install and configure the SDK">
+  <title>Installation | Acme SDK Docs</title>
+</head>
+<body>
+  <!-- Site header / nav - should be stripped -->
+  <nav class="navbar navbar--fixed-top">
+    <div class="navbar__inner">
+      <a class="navbar__brand" href="/">Acme Docs</a>
+      <ul class="navbar__items">
+        <li><a href="/docs">Docs</a></li>
+        <li><a href="/api">API</a></li>
+        <li><a href="/blog">Blog</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="docPage">
+    <!-- Sidebar - should be stripped -->
+    <aside class="docSidebarContainer">
+      <nav class="sidebarLogo">
+        <ul class="sidebarMenu">
+          <li><a href="/docs/intro">Introduction</a></li>
+          <li><a href="/docs/install">Installation</a></li>
+          <li><a href="/docs/config">Configuration</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main content - should be kept -->
+    <main class="docMainContainer">
+      <div class="docItemContainer">
+        <article class="theme-doc-markdown">
+          <h1>Installation</h1>
+          <p>Get started with the Acme SDK in minutes. This guide covers installation, initial setup, and your first API call.</p>
+
+          <h2>Prerequisites</h2>
+          <p>Before installing, make sure you have:</p>
+          <ul>
+            <li>Node.js 18 or higher</li>
+            <li>An Acme API key (get one at <a href="https://dashboard.acme.dev">dashboard.acme.dev</a>)</li>
+            <li>npm, yarn, or pnpm</li>
+          </ul>
+
+          <h2>Install the Package</h2>
+          <p>Install the SDK using your preferred package manager:</p>
+          <pre><code class="language-bash">npm install @acme/sdk</code></pre>
+          <p>Or with yarn:</p>
+          <pre><code class="language-bash">yarn add @acme/sdk</code></pre>
+
+          <h2>Initialize the Client</h2>
+          <p>Create a new client instance with your API key:</p>
+          <pre><code class="language-typescript">import { AcmeClient } from '@acme/sdk';
+
+const client = new AcmeClient({
+  apiKey: process.env.ACME_API_KEY,
+  timeout: 30000,
+});
+</code></pre>
+
+          <h2>Configuration Options</h2>
+          <p>The client accepts the following options:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Type</th>
+                <th>Default</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>apiKey</code></td>
+                <td><code>string</code></td>
+                <td>—</td>
+                <td>Your Acme API key. Required.</td>
+              </tr>
+              <tr>
+                <td><code>timeout</code></td>
+                <td><code>number</code></td>
+                <td><code>10000</code></td>
+                <td>Request timeout in milliseconds.</td>
+              </tr>
+              <tr>
+                <td><code>baseUrl</code></td>
+                <td><code>string</code></td>
+                <td><code>https://api.acme.dev</code></td>
+                <td>Override the API base URL.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>Your First Request</h2>
+          <p>Once initialized, you can make API calls:</p>
+          <pre><code class="language-typescript">const result = await client.process({
+  input: 'Hello, world!',
+  model: 'acme-v2',
+});
+
+console.log(result.output);
+</code></pre>
+
+          <!-- Edit this page link - should be stripped -->
+          <div class="edit-page">
+            <a href="https://github.com/acme/docs/edit/main/docs/install.md">Edit this page</a>
+          </div>
+        </article>
+
+        <!-- On this page TOC - should be stripped -->
+        <div class="table-of-contents">
+          <ul>
+            <li><a href="#prerequisites">Prerequisites</a></li>
+            <li><a href="#install">Install the Package</a></li>
+            <li><a href="#initialize">Initialize the Client</a></li>
+          </ul>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer - should be stripped -->
+  <footer class="footer">
+    <div>Copyright 2024 Acme Inc.</div>
+    <nav>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+    </nav>
+  </footer>
+
+  <!-- Cookie banner - should be stripped -->
+  <div class="cookie-consent-banner">
+    <p>We use cookies. <button>Accept</button></p>
+  </div>
+</body>
+</html>

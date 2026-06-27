@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Changelog | Acme SDK</title>
+  <meta name="description" content="Release notes and changelog for the Acme SDK">
+</head>
+<body>
+  <header role="banner">
+    <nav role="navigation">
+      <a href="/">Home</a>
+      <a href="/docs">Docs</a>
+      <a href="/changelog">Changelog</a>
+    </nav>
+  </header>
+
+  <main role="main">
+    <article>
+      <h1>Changelog</h1>
+      <p>All notable changes to the Acme SDK are documented here. This project follows <a href="https://semver.org">Semantic Versioning</a>.</p>
+
+      <h2>v2.3.0 — 2024-03-10</h2>
+      <h3>Added</h3>
+      <ul>
+        <li>New <code>client.batch()</code> method for parallel API calls</li>
+        <li>Support for streaming responses via <code>stream: true</code> option</li>
+        <li>Built-in retry logic with exponential backoff</li>
+      </ul>
+      <h3>Changed</h3>
+      <ul>
+        <li>Default timeout increased from 10s to 30s</li>
+        <li><code>client.process()</code> now returns a typed response object instead of <code>any</code></li>
+      </ul>
+      <h3>Fixed</h3>
+      <ul>
+        <li>Race condition in connection pool under high concurrency</li>
+        <li>Memory leak when streaming large responses</li>
+      </ul>
+
+      <h2>v2.2.1 — 2024-02-28</h2>
+      <h3>Fixed</h3>
+      <ul>
+        <li>Authentication headers were missing on retried requests</li>
+        <li>TypeScript types for <code>metadata</code> field now correctly typed as <code>Record&lt;string, unknown&gt;</code></li>
+      </ul>
+
+      <h2>v2.2.0 — 2024-02-15</h2>
+      <h3>Added</h3>
+      <ul>
+        <li>Webhook signature verification utility: <code>verifyWebhook(payload, secret)</code></li>
+        <li>New <code>AcmeError</code> class with structured error codes</li>
+      </ul>
+      <h3>Breaking Changes</h3>
+      <ul>
+        <li>Removed deprecated <code>client.send()</code> method. Use <code>client.process()</code> instead.</li>
+      </ul>
+
+      <h2>v2.1.0 — 2024-01-20</h2>
+      <h3>Added</h3>
+      <ul>
+        <li>Python SDK now available: <code>pip install acme-sdk</code></li>
+        <li>Rate limit headers exposed in response object</li>
+      </ul>
+
+      <h2>v2.0.0 — 2024-01-01</h2>
+      <p>Major release with a redesigned API surface.</p>
+      <h3>Breaking Changes</h3>
+      <ul>
+        <li>API key must now be passed to constructor, not set globally</li>
+        <li>All methods are now async/await based</li>
+        <li>Minimum Node.js version bumped to 18</li>
+      </ul>
+      <pre><code class="language-typescript">// Before (v1.x)
+acme.setKey('sk-...');
+const result = acme.process('hello');
+
+// After (v2.x)
+const client = new AcmeClient({ apiKey: 'sk-...' });
+const result = await client.process({ input: 'hello' });
+</code></pre>
+    </article>
+  </main>
+
+  <footer role="contentinfo">
+    <p>Acme SDK &copy; 2024</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Webhooks let you receive real-time event notifications">
+  <title>Webhooks | Acme Docs</title>
+</head>
+<body>
+  <!-- Dense site chrome to be stripped -->
+  <div class="cookie-consent-banner" id="cookie-banner">
+    We use cookies to improve your experience.
+    <button onclick="accept()">Accept</button>
+    <button onclick="reject()">Reject</button>
+  </div>
+
+  <header id="site-header" role="banner">
+    <div class="navbar">
+      <a href="/" class="logo">Acme</a>
+      <nav role="navigation">
+        <a href="/docs">Docs</a>
+        <a href="/api">API Reference</a>
+        <a href="/changelog">Changelog</a>
+        <a href="/blog">Blog</a>
+        <a href="/pricing">Pricing</a>
+      </nav>
+      <div class="header-actions">
+        <a href="/login">Login</a>
+        <a href="/signup">Sign Up</a>
+      </div>
+    </div>
+    <div class="announcement-bar">
+      🎉 Acme v2.0 is here! <a href="/blog/v2">Read the announcement</a>
+    </div>
+  </header>
+
+  <div class="page-layout">
+    <nav class="sidebar" role="navigation">
+      <div class="sidebar-section">
+        <h3>Getting Started</h3>
+        <ul>
+          <li><a href="/docs/intro">Introduction</a></li>
+          <li><a href="/docs/quickstart">Quickstart</a></li>
+          <li><a href="/docs/authentication">Authentication</a></li>
+        </ul>
+      </div>
+      <div class="sidebar-section">
+        <h3>Guides</h3>
+        <ul>
+          <li><a href="/docs/webhooks">Webhooks</a></li>
+          <li><a href="/docs/pagination">Pagination</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main id="main-content" role="main">
+      <div class="table-of-contents">
+        <strong>On this page</strong>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#setup">Setup</a></li>
+          <li><a href="#verification">Verification</a></li>
+          <li><a href="#events">Events</a></li>
+        </ul>
+      </div>
+
+      <article>
+        <h1>Webhooks</h1>
+        <p>Webhooks let you receive real-time HTTP notifications when events happen in your Acme account. Instead of polling the API, register a URL and we'll POST to it whenever something changes.</p>
+
+        <h2>Overview</h2>
+        <p>When an event occurs, Acme sends an HTTP POST to your endpoint with a JSON payload describing the event. Your endpoint should respond with a <code>2xx</code> status code within 10 seconds.</p>
+
+        <h2>Setup</h2>
+        <p>Register a webhook endpoint in your dashboard or via the API:</p>
+        <pre><code class="language-bash">curl -X POST https://api.acme.dev/v1/webhooks \
+  -H "Authorization: Bearer $ACME_API_KEY" \
+  -d '{
+    "url": "https://yourapp.com/webhooks/acme",
+    "events": ["source.changed", "source.error"],
+    "secret": "whsec_your_signing_secret"
+  }'</code></pre>
+
+        <h2>Verification</h2>
+        <p>All webhook payloads are signed with HMAC-SHA256. Always verify the signature before processing.</p>
+        <pre><code class="language-typescript">import crypto from 'crypto';
+
+function verifyWebhook(payload: string, signature: string, secret: string): boolean {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  );
+}
+</code></pre>
+
+        <h2>Events</h2>
+        <table>
+          <thead>
+            <tr><th>Event</th><th>Description</th><th>Trigger</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>source.changed</code></td><td>Content changed since last crawl</td><td>Crawl detected diff</td></tr>
+            <tr><td><code>source.unchanged</code></td><td>Crawl completed, no changes</td><td>Content hash matched</td></tr>
+            <tr><td><code>source.error</code></td><td>Crawl failed</td><td>Network or parse error</td></tr>
+            <tr><td><code>source.created</code></td><td>New source added</td><td>Source creation</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </main>
+  </div>
+
+  <div class="feedback-widget" id="page-feedback">
+    <p>Was this page helpful?</p>
+    <button>Yes</button>
+    <button>No</button>
+  </div>
+
+  <footer role="contentinfo">
+    <div class="footer-grid">
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="/features">Features</a></li>
+          <li><a href="/pricing">Pricing</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/blog">Blog</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="copyright">&copy; 2024 Acme Inc. All rights reserved.</p>
+  </footer>
+</body>
+</html>
