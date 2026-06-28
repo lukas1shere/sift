@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { diffMarkdown } from '@/lib/diff';
 import { signPayload, buildPayload } from '@/lib/webhook';
 

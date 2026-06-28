@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { buildDOM, findMainContent, looksLikeShell, removeBoilerplate } from '@/lib/extract/clean';
 import { applyDocsNiche } from '@/lib/extract/niche/docs';
 import { htmlToMarkdown } from '@/lib/extract/markdown';

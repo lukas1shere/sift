@@ -16,10 +16,10 @@ import { buildPayload, deliverWebhook } from '@/lib/webhook';
 export const crawlSource = inngest.createFunction(
   {
     id: 'crawl-source',
-    concurrency: { limit: 5 }, // max 5 concurrent crawls
+    concurrency: { limit: 5 },
     retries: 2,
+    triggers: [{ event: 'sift/source.crawl' }],
   },
-  { event: 'sift/source.crawl' },
   async ({ event, step }) => {
     const { sourceId } = event.data as { sourceId: string };
 
@@ -100,8 +100,7 @@ export const crawlSource = inngest.createFunction(
 
 // ── Dispatch due sources (cron every 5 min) ───────────────────────────────────
 export const dispatchDueSources = inngest.createFunction(
-  { id: 'dispatch-due-sources' },
-  { cron: '*/5 * * * *' },
+  { id: 'dispatch-due-sources', triggers: [{ cron: '*/5 * * * *' }] },
   async ({ step }) => {
     const dueSources = await step.run('get-due-sources', () => getDueSources(50));
 
@@ -120,9 +119,9 @@ export const dispatchDueSources = inngest.createFunction(
 export const deliverWebhooks = inngest.createFunction(
   {
     id: 'deliver-webhooks',
-    retries: 5, // Inngest retries on failure with backoff
+    retries: 5,
+    triggers: [{ event: 'sift/source.changed' }],
   },
-  { event: 'sift/source.changed' },
   async ({ event, step }) => {
     const { sourceId, userId, sourceUrl, changeSummary, diff } = event.data as {
       sourceId: string;
