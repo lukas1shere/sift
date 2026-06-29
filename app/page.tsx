@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 type Tab = 'markdown' | 'json' | 'stats';
 
@@ -15,6 +16,45 @@ interface ExtractResult {
   renderMode: 'fetch' | 'playwright';
   meta: Record<string, string>;
 }
+
+const FEATURES = [
+  {
+    title: 'Cleaner than raw Readability',
+    body: 'Strips nav, sidebars, cookie banners, ads, and "on this page" TOCs. Tunes for Docusaurus, Sphinx, ReadMe, Mintlify, GitBook, and MkDocs by name.',
+  },
+  {
+    title: 'Scheduled change detection',
+    body: 'Register a URL with a schedule. Sift re-crawls it, diffs section-by-section, and fires a webhook only when content meaningfully changed — not on every cosmetic tweak.',
+  },
+  {
+    title: 'Structured for LLMs',
+    body: 'Returns heading tree, code blocks with language tags, and tables as typed arrays alongside the Markdown. Stable output = meaningful diffs. Token count on every response.',
+  },
+];
+
+const TIERS = [
+  {
+    name: 'Free',
+    price: 0,
+    features: ['100 extractions / mo', '2 watched sources', 'Daily schedule', 'API access'],
+  },
+  {
+    name: 'Pro',
+    price: 19,
+    features: ['5,000 extractions / mo', '50 watched sources', 'Hourly schedule', 'Webhooks + full history'],
+    highlight: true,
+  },
+  {
+    name: 'Team',
+    price: 99,
+    features: ['50,000 extractions / mo', '500 watched sources', 'Every 15 min', 'Priority support'],
+  },
+];
+
+const EXAMPLE = `curl -X POST https://your-domain.com/api/v1/extract \\
+  -H "Authorization: Bearer sk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{"url": "https://docs.example.com/quickstart", "niche": "docs"}'`;
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -74,12 +114,55 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center gap-3">
-        <span className="text-lg font-bold text-white">Sift</span>
-        <span className="text-gray-500 text-sm">URL → clean Markdown + JSON for AI</span>
+
+      {/* Nav */}
+      <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+        <span className="text-sm font-bold text-white">Sift</span>
+        <nav className="flex items-center gap-6 text-sm">
+          <Link href="/docs" className="text-gray-500 hover:text-white transition-colors">API Docs</Link>
+          <Link href="/dashboard/sources" className="text-gray-500 hover:text-white transition-colors">Dashboard</Link>
+          <Link href="/login" className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition-colors text-xs font-semibold">
+            Sign in →
+          </Link>
+        </nav>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      {/* Hero */}
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center space-y-5">
+        <div className="inline-block text-xs text-blue-400 border border-blue-800 bg-blue-950/40 px-3 py-1 rounded-full">
+          Docs · Changelogs · API References
+        </div>
+        <h1 className="text-4xl font-bold text-white tracking-tight">
+          URL → clean Markdown for AI
+        </h1>
+        <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+          Extract any webpage into token-efficient Markdown + structured JSON.
+          Schedule it, detect what changed, fire a webhook. Built for RAG pipelines and AI agents.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link href="/login" className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded font-semibold text-sm transition-colors">
+            Start for free →
+          </Link>
+          <Link href="/docs" className="text-gray-400 hover:text-white text-sm transition-colors px-4 py-2.5">
+            Read the docs
+          </Link>
+        </div>
+      </section>
+
+      {/* Code sample */}
+      <section className="max-w-3xl mx-auto px-6 pb-16">
+        <pre className="bg-gray-900 border border-gray-800 rounded p-4 text-xs text-gray-300 overflow-auto">
+          {EXAMPLE}
+        </pre>
+      </section>
+
+      {/* Live playground */}
+      <section className="max-w-5xl mx-auto px-6 pb-20 space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Live demo</span>
+          <div className="flex-1 h-px bg-gray-800" />
+        </div>
+
         <form onSubmit={handleExtract} className="flex gap-2">
           <input
             type="url"
@@ -126,16 +209,10 @@ export default function Home() {
                 <span className="text-gray-600">{result.contentHash.slice(0, 8)}</span>
               </div>
             </div>
-
             <div className="flex gap-0 border-b border-gray-800">
               {(['markdown', 'json', 'stats'] as Tab[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${
-                    tab === t ? 'border-blue-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'
-                  }`}
-                >
+                <button key={t} onClick={() => setTab(t)}
+                  className={`px-4 py-2 text-sm border-b-2 -mb-px transition-colors ${tab === t ? 'border-blue-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
                   {t}
                 </button>
               ))}
@@ -146,18 +223,14 @@ export default function Home() {
                 </button>
               )}
             </div>
-
             {tab === 'stats' ? (
               <div className="bg-gray-900 rounded border border-gray-800 p-4 text-sm space-y-2">
                 {([
-                  ['URL', result.url],
-                  ['Title', result.title],
+                  ['URL', result.url], ['Title', result.title],
                   ['Tokens (~cl100k)', result.tokenCount.toLocaleString()],
-                  ['Content hash', result.contentHash],
-                  ['Render mode', result.renderMode],
+                  ['Content hash', result.contentHash], ['Render mode', result.renderMode],
                   ['Extraction time', elapsed != null ? `${(elapsed / 1000).toFixed(2)}s` : '—'],
-                  ['Sections', String(countOf('sections'))],
-                  ['Code blocks', String(countOf('codeBlocks'))],
+                  ['Sections', String(countOf('sections'))], ['Code blocks', String(countOf('codeBlocks'))],
                   ['Tables', String(countOf('tables'))],
                   ...Object.entries(result.meta).map(([k, v]) => [`meta.${k}`, v]),
                 ] as [string, string][]).map(([label, value]) => (
@@ -176,12 +249,71 @@ export default function Home() {
         )}
 
         {!result && !loading && !error && (
-          <div className="text-center py-20 text-gray-700 text-sm space-y-1">
-            <div>Paste any URL — docs, changelogs, API references.</div>
-            <div>Returns clean Markdown + structured JSON, stripped of nav and chrome.</div>
+          <div className="text-center py-12 text-gray-700 text-sm">
+            Paste any docs URL above — see clean Markdown in seconds.
           </div>
         )}
-      </main>
+      </section>
+
+      {/* Features */}
+      <section className="border-t border-gray-800 py-20">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="grid grid-cols-3 gap-8">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="space-y-2">
+                <h3 className="text-white text-sm font-semibold">{f.title}</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="border-t border-gray-800 py-20">
+        <div className="max-w-3xl mx-auto px-6 space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="text-white font-semibold text-lg">Simple pricing</h2>
+            <p className="text-gray-500 text-sm">Free to start, no card required. Upgrade when you need more.</p>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {TIERS.map((t) => (
+              <div key={t.name} className={`rounded p-5 space-y-4 border ${t.highlight ? 'border-blue-500 bg-blue-950/20' : 'border-gray-800 bg-gray-900'}`}>
+                <div>
+                  <div className="text-white font-semibold text-sm">{t.name}</div>
+                  <div className="text-2xl font-bold text-white mt-1">
+                    {t.price === 0 ? 'Free' : `$${t.price}`}
+                    {t.price > 0 && <span className="text-sm text-gray-500 font-normal">/mo</span>}
+                  </div>
+                </div>
+                <ul className="space-y-1.5">
+                  {t.features.map((f) => (
+                    <li key={f} className="text-xs text-gray-400 flex gap-2">
+                      <span className="text-green-400 shrink-0">✓</span>{f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/login"
+                  className={`block text-center text-xs py-2 rounded transition-colors font-semibold ${t.highlight ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'}`}>
+                  Get started
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-800 px-6 py-8">
+        <div className="max-w-4xl mx-auto flex items-center justify-between text-xs text-gray-700">
+          <span>Sift — URL to clean Markdown for AI</span>
+          <div className="flex gap-6">
+            <Link href="/docs" className="hover:text-gray-500 transition-colors">API Docs</Link>
+            <Link href="/dashboard/sources" className="hover:text-gray-500 transition-colors">Dashboard</Link>
+            <a href="/llms.txt" className="hover:text-gray-500 transition-colors">llms.txt</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

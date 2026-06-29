@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Sift API
+  version: 1.0.0
+  description: |
+    URL → clean Markdown + structured JSON for AI pipelines.
+    Authenticate with `Authorization: Bearer sk_live_...`.
+
+servers:
+  - url: https://sift.dev/api/v1
+    description: Production
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    Section:
+      type: object
+      properties:
+        id:    { type: string }
+        level: { type: integer, minimum: 1, maximum: 6 }
+        heading: { type: string }
+        content: { type: string }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/Section' }
+
+    CodeBlock:
+      type: object
+      properties:
+        language: { type: string, nullable: true }
+        code:     { type: string }
+
+    Table:
+      type: object
+      properties:
+        headers: { type: array, items: { type: string } }
+        rows:
+          type: array
+          items: { type: array, items: { type: string } }
+
+    ExtractedStructure:
+      type: object
+      properties:
+        title:       { type: string }
+        description: { type: string, nullable: true }
+        sections:    { type: array, items: { $ref: '#/components/schemas/Section' } }
+        codeBlocks:  { type: array, items: { $ref: '#/components/schemas/CodeBlock' } }
+        tables:      { type: array, items: { $ref: '#/components/schemas/Table' } }
+
+    ExtractResult:
+      type: object
+      properties:
+        url:          { type: string }
+        title:        { type: string }
+        description:  { type: string, nullable: true }
+        markdown:     { type: string }
+        json:         { $ref: '#/components/schemas/ExtractedStructure' }
+        content_hash: { type: string, description: SHA-256 of normalized markdown }
+        token_count:  { type: integer, description: Approximate cl100k token count }
+        render_mode:  { type: string, enum: [fetch, playwright] }
+        meta:         { type: object, additionalProperties: { type: string } }
+        _quota:
+          type: object
+          properties:
+            used:     { type: integer }
+            limit:    { type: integer }
+            reset_at: { type: string, format: date-time }
+
+    Source:
+      type: object
+      properties:
+        id:                { type: string, format: uuid }
+        userId:            { type: string, format: uuid }
+        url:               { type: string }
+        niche:             { type: string, enum: [docs, auto] }
+        renderMode:        { type: string, enum: [fetch, playwright, auto] }
+        scheduleInterval:  { type: integer, nullable: true, description: Seconds between crawls }
+        nextCrawlAt:       { type: string, format: date-time, nullable: true }
+        lastCrawlAt:       { type: string, format: date-time, nullable: true }
+        active:            { type: boolean }
+        createdAt:         { type: string, format: date-time }
+
+    Diff:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        sourceId:        { type: string, format: uuid }
+        changeSummary:   { type: string }
+        addedSections:   { type: array, items: { type: object } }
+        removedSections: { type: array, items: { type: object } }
+        changedSections: { type: array, items: { type: object } }
+        changedAt:       { type: string, format: date-time }
+
+    ApiError:
+      type: object
+      properties:
+        error: { type: string }
+        code:  { type: string }
+
+paths:
+  /extract:
+    post:
+      summary: Extract a URL
+      description: Fetches a URL and returns clean Markdown + structured JSON.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  description: The URL to extract. Must be http or https.
+                niche:
+                  type: string
+                  enum: [docs, auto]
+                  default: auto
+                  description: '"docs" enables documentation-site-specific extraction tuning.'
+                render_mode:
+                  type: string
+                  enum: [fetch, playwright, auto]
+                  default: auto
+                  description: '"auto" tries plain fetch first, falls back to headless browser for JS-rendered pages.'
+      responses:
+        '200':
+          description: Extraction succeeded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExtractResult' }
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '422':
+          description: Invalid URL
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '429':
+          description: Monthly quota exceeded
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/ApiError' }
+                  - type: object
+                    properties:
+                      limit:    { type: integer }
+                      used:     { type: integer }
+                      reset_at: { type: string, format: date-time }
+        '502':
+          description: Failed to fetch the target URL
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /usage:
+    get:
+      summary: Get current quota usage
+      responses:
+        '200':
+          description: Current period usage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  extractions:
+                    type: object
+                    properties:
+                      used:      { type: integer }
+                      limit:     { type: integer }
+                      remaining: { type: integer }
+                  reset_at: { type: string, format: date-time }
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /sources:
+    get:
+      summary: List watched sources
+      responses:
+        '200':
+          description: List of sources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sources:
+                    type: array
+                    items: { $ref: '#/components/schemas/Source' }
+    post:
+      summary: Create a watched source
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:               { type: string }
+                niche:             { type: string, enum: [docs, auto] }
+                render_mode:       { type: string, enum: [fetch, playwright, auto] }
+                schedule_interval: { type: integer, nullable: true, description: Seconds between crawls. null = one-time. }
+      responses:
+        '201':
+          description: Source created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Source' }
+
+  /sources/{id}/crawl:
+    post:
+      summary: Trigger an immediate crawl
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Crawl queued or completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queued:      { type: boolean }
+                  hasChanges:  { type: boolean }
+                  snapshotId:  { type: string }
+
+  /sources/{id}/diffs:
+    get:
+      summary: Get change history for a source
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        '200':
+          description: List of diffs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  diffs:
+                    type: array
+                    items: { $ref: '#/components/schemas/Diff' }

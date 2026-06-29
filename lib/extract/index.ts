@@ -61,10 +61,15 @@ async function getHTML(url: string, mode: 'fetch' | 'playwright' | 'auto'): Prom
   }
 
   // auto: try fetch first, fall back to playwright if it looks like a shell
+  // PLAYWRIGHT_DISABLED=true skips the fallback (set this on Vercel where Chromium isn't available)
   const fetched = await fetchPage(url);
-  if (looksLikeShell(fetched.html)) {
-    const { renderPage } = await import('./playwright');
-    return { result: await renderPage(url), usedMode: 'playwright' };
+  if (looksLikeShell(fetched.html) && process.env.PLAYWRIGHT_DISABLED !== 'true') {
+    try {
+      const { renderPage } = await import('./playwright');
+      return { result: await renderPage(url), usedMode: 'playwright' };
+    } catch {
+      // Playwright unavailable — return fetch result as-is
+    }
   }
   return { result: fetched, usedMode: 'fetch' };
 }

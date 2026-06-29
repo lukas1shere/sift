@@ -1,0 +1,81 @@
+# Sift
+
+> URL → clean Markdown + structured JSON for LLMs and RAG pipelines.
+
+Sift is an API service that extracts clean, token-efficient Markdown and structured JSON from any URL. It is designed for AI applications — RAG pipelines, agents, and chatbots that need to stay in sync with external web content.
+
+## What makes it different
+
+Most "URL to Markdown" tools are one-shot. Sift's primary feature is scheduled change detection: register a URL, and Sift re-crawls it on a schedule, computes a semantic diff section-by-section, and fires a webhook only when content meaningfully changed. No noise from cosmetic updates.
+
+The extraction engine is tuned for documentation sites: Docusaurus, Sphinx/ReadTheDocs, ReadMe, Mintlify, GitBook, and MkDocs are all handled with framework-specific content targeting, not just generic Readability.
+
+## Output formats
+
+Every extraction returns:
+- `markdown` — clean, normalized Markdown (nav, footers, ads, cookie banners stripped)
+- `json.sections` — heading tree with content per section
+- `json.codeBlocks` — code blocks with language tags preserved
+- `json.tables` — tables as typed arrays (headers + rows)
+- `content_hash` — SHA-256 of the normalized Markdown (stable across repeated fetches)
+- `token_count` — cl100k-basis token estimate
+
+## API
+
+Base URL: https://sift.dev/api/v1
+Authentication: `Authorization: Bearer sk_live_...`
+
+### POST /api/v1/extract
+Extract a URL to Markdown + JSON.
+
+Request body:
+- `url` (string, required) — the URL to extract
+- `niche` ("docs" | "auto", optional) — "docs" enables doc-framework-specific tuning
+- `render_mode` ("fetch" | "playwright" | "auto", optional) — "auto" falls back to headless browser for JS-rendered pages
+
+Response includes: url, title, description, markdown, json (sections/codeBlocks/tables), content_hash, token_count, render_mode, meta, _quota
+
+### GET /api/v1/usage
+Returns current period quota: used, limit, remaining, reset_at.
+
+### POST /api/v1/sources
+Register a URL for scheduled monitoring.
+
+Request body:
+- `url` (string, required)
+- `niche` ("docs" | "auto", optional)
+- `schedule_interval` (integer seconds | null) — null = one-time only
+
+### GET /api/v1/sources/:id/diffs
+Returns the change history for a monitored source. Each diff has: change_summary, added_sections, removed_sections, changed_sections, changed_at.
+
+## Webhook payload (source.changed event)
+
+```json
+{
+  "event": "source.changed",
+  "source_id": "...",
+  "url": "https://...",
+  "change_summary": "Updated: \"Installation\". Added: \"Advanced\"",
+  "diff": {
+    "added": ["Advanced"],
+    "removed": [],
+    "changed": ["Installation"]
+  },
+  "timestamp": "2024-03-15T10:30:00.000Z"
+}
+```
+
+Webhook payloads are signed with HMAC-SHA256. Verify using the `X-Sift-Signature` header.
+
+## Tiers
+
+- Free (no card): 100 extractions/month, 2 sources, daily schedule
+- Pro ($19/month): 5,000 extractions, 50 sources, hourly schedule, webhooks
+- Team ($99/month): 50,000 extractions, 500 sources, every 15 minutes
+
+## Links
+
+- Docs: https://sift.dev/docs
+- Dashboard: https://sift.dev/dashboard
+- Sign up: https://sift.dev/login
