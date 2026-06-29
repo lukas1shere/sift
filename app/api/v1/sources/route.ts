@@ -42,8 +42,11 @@ export async function POST(req: NextRequest) {
 
   // Enforce max sources per tier
   try {
-    const existing = await listSources(auth.userId);
-    const maxSources = getMaxSources(auth.userId);
+    const [existing, maxSources, minInterval] = await Promise.all([
+      listSources(auth.userId),
+      getMaxSources(auth.userId),
+      getMinScheduleInterval(auth.userId),
+    ]);
     if (existing.length >= maxSources) {
       return err(
         `Source limit reached (${maxSources}). Upgrade to add more.`,
@@ -54,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     const scheduleInterval =
       schedule_interval != null && typeof schedule_interval === 'number'
-        ? Math.max(schedule_interval, getMinScheduleInterval(auth.userId))
+        ? Math.max(schedule_interval, minInterval)
         : null;
 
     const source = await createSource(auth.userId, {
