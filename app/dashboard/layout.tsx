@@ -2,27 +2,39 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getSessionUser } from '@/lib/supabase/server';
 import { checkQuota } from '@/lib/usage';
+import { getUserTier } from '@/lib/stripe';
 import { SignOutButton } from './SignOutButton';
 
 const NAV = [
   { href: '/dashboard/sources', label: 'Sources' },
   { href: '/dashboard/keys', label: 'API Keys' },
   { href: '/dashboard/webhooks', label: 'Webhooks' },
+  { href: '/dashboard/billing', label: 'Billing' },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect('/login');
 
-  const quota = await checkQuota(user.id).catch(() => null);
+  const [quota, tier] = await Promise.all([
+    checkQuota(user.id).catch(() => null),
+    getUserTier(user.id).catch(() => 'free' as const),
+  ]);
   const pct = quota ? Math.min(100, Math.round((quota.used / quota.limit) * 100)) : 0;
 
   return (
     <div className="min-h-screen bg-gray-950 flex" style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>
       {/* Sidebar */}
       <aside className="w-52 shrink-0 border-r border-gray-800 bg-gray-900 flex flex-col">
-        <div className="px-4 py-4 border-b border-gray-800">
+        <div className="px-4 py-4 border-b border-gray-800 flex items-center justify-between">
           <Link href="/dashboard/sources" className="text-white font-bold text-sm">Sift</Link>
+          <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${
+            tier === 'team' ? 'bg-purple-800 text-purple-200' :
+            tier === 'pro' ? 'bg-blue-800 text-blue-200' :
+            'bg-gray-800 text-gray-400'
+          }`}>
+            {tier.toUpperCase()}
+          </span>
         </div>
 
         <nav className="flex-1 px-2 py-3 space-y-0.5">
@@ -62,9 +74,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <p className="text-xs text-gray-700">
-              Resets {new Date(quota.resetAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-700">
+                Resets {new Date(quota.resetAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </p>
+              {pct >= 80 && tier === 'free' && (
+                <Link href="/dashboard/billing" className="text-xs text-blue-400 hover:text-blue-300">
+                  Upgrade
+                </Link>
+              )}
+            </div>
           </div>
         )}
 

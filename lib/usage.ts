@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from './supabase/client';
+import { getUserTier, TIER_LIMITS } from './stripe';
 
 export interface UsageRecord {
   extractionsCount: number;
@@ -9,13 +10,11 @@ export interface TierLimits {
   extractionsPerMonth: number;
 }
 
-// Returns "YYYY-MM-DD" for the first day of the current UTC month
 export function getPeriodStart(date = new Date()): string {
   const d = new Date(date);
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`;
 }
 
-// Returns ISO string for the first day of the NEXT UTC month (for reset_at)
 export function getPeriodEnd(date = new Date()): string {
   const d = new Date(date);
   d.setUTCMonth(d.getUTCMonth() + 1, 1);
@@ -23,14 +22,9 @@ export function getPeriodEnd(date = new Date()): string {
   return d.toISOString();
 }
 
-export function getTierLimits(_userId?: string): TierLimits {
-  // Phase 2: everyone on free tier. Phase 5 will check subscriptions table.
-  return {
-    extractionsPerMonth: parseInt(
-      process.env.TIER_FREE_EXTRACTIONS_PER_MONTH ?? '100',
-      10
-    ),
-  };
+export async function getTierLimits(userId: string): Promise<TierLimits> {
+  const tier = await getUserTier(userId);
+  return { extractionsPerMonth: TIER_LIMITS[tier].extractionsPerMonth };
 }
 
 export async function getUsage(userId: string, period: string): Promise<UsageRecord> {
@@ -71,7 +65,7 @@ export interface QuotaCheckResult {
 export async function checkQuota(userId: string): Promise<QuotaCheckResult> {
   const period = getPeriodStart();
   const resetAt = getPeriodEnd();
-  const limits = getTierLimits(userId);
+  const limits = await getTierLimits(userId);
   const { extractionsCount } = await getUsage(userId, period);
 
   return {

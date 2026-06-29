@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { generateApiKey, hashApiKey } from '@/lib/keys';
-import { getPeriodStart, getPeriodEnd, getTierLimits } from '@/lib/usage';
+import { getPeriodStart, getPeriodEnd } from '@/lib/usage';
 
 // ── Mock Supabase so we never hit a real DB ───────────────────────────────────
 const mockSupabase = {
@@ -21,6 +21,18 @@ const mockSupabase = {
 vi.mock('@/lib/supabase/client', () => ({
   getSupabaseAdmin: () => mockSupabase,
   getUserFromToken: vi.fn(),
+}));
+
+// Stub getUserTier so checkQuota doesn't consume an extra Supabase single() call
+vi.mock('@/lib/stripe', () => ({
+  getUserTier: vi.fn().mockResolvedValue('free'),
+  TIER_LIMITS: {
+    free:  { extractionsPerMonth: 100,   maxSources: 2,   minScheduleInterval: 86400, name: 'Free',  price: 0  },
+    pro:   { extractionsPerMonth: 5000,  maxSources: 50,  minScheduleInterval: 3600,  name: 'Pro',   price: 19 },
+    team:  { extractionsPerMonth: 50000, maxSources: 500, minScheduleInterval: 900,   name: 'Team',  price: 99 },
+  },
+  stripe: {},
+  tierFromPriceId: vi.fn().mockReturnValue('free'),
 }));
 
 vi.mock('@/lib/extract', () => ({
@@ -113,10 +125,10 @@ describe('getPeriodEnd', () => {
   });
 });
 
-describe('getTierLimits', () => {
-  it('returns default free tier', () => {
-    const limits = getTierLimits();
-    expect(limits.extractionsPerMonth).toBeGreaterThan(0);
+describe('TIER_LIMITS', () => {
+  it('free tier has a positive extraction limit', async () => {
+    const { TIER_LIMITS } = await import('@/lib/stripe');
+    expect(TIER_LIMITS.free.extractionsPerMonth).toBeGreaterThan(0);
   });
 });
 
@@ -191,7 +203,8 @@ describe('POST /api/v1/extract', () => {
   });
 
   it('returns 429 when quota is exceeded', async () => {
-    const limit = getTierLimits().extractionsPerMonth;
+    const { TIER_LIMITS } = await import('@/lib/stripe');
+    const limit = TIER_LIMITS.free.extractionsPerMonth;
 
     mockSupabase.single
       .mockResolvedValueOnce({ data: { id: 'key-id-1', user_id: 'user-id-1', revoked_at: null }, error: null })

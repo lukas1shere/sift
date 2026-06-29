@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from './supabase/client';
+import { getUserTier, TIER_LIMITS } from './stripe';
 import type { SemanticDiff } from './diff';
 import type { ExtractResult } from './extract/types';
 
@@ -52,14 +53,15 @@ function rowToSource(r: Record<string, unknown>): Source {
   };
 }
 
-// ── Tier limit helper ─────────────────────────────────────────────────────────
-// Phase 3: everyone on free tier. Phase 5 will check subscriptions.
-export function getMinScheduleInterval(_userId?: string): number {
-  return parseInt(process.env.TIER_FREE_MIN_SCHEDULE_INTERVAL ?? '86400', 10);
+// ── Tier limit helpers ────────────────────────────────────────────────────────
+export async function getMinScheduleInterval(userId: string): Promise<number> {
+  const tier = await getUserTier(userId);
+  return TIER_LIMITS[tier].minScheduleInterval;
 }
 
-export function getMaxSources(_userId?: string): number {
-  return parseInt(process.env.TIER_FREE_MAX_SOURCES ?? '2', 10);
+export async function getMaxSources(userId: string): Promise<number> {
+  const tier = await getUserTier(userId);
+  return TIER_LIMITS[tier].maxSources;
 }
 
 // ── Source CRUD ───────────────────────────────────────────────────────────────
@@ -69,7 +71,7 @@ export async function createSource(
 ): Promise<Source> {
   const supabase = getSupabaseAdmin();
 
-  const minInterval = getMinScheduleInterval(userId);
+  const minInterval = await getMinScheduleInterval(userId);
   let scheduleInterval = opts.scheduleInterval ?? null;
   if (scheduleInterval !== null && scheduleInterval < minInterval) {
     scheduleInterval = minInterval;
@@ -131,7 +133,7 @@ export async function updateSource(
   const updates: Record<string, unknown> = {};
   if (patch.active !== undefined) updates.active = patch.active;
   if (patch.scheduleInterval !== undefined) {
-    const min = getMinScheduleInterval(userId);
+    const min = await getMinScheduleInterval(userId);
     const val = patch.scheduleInterval;
     updates.schedule_interval = val !== null && val < min ? min : val;
     // Re-arm next_crawl_at if activating a schedule
